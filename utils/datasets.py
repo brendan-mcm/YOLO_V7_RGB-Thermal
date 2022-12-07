@@ -407,13 +407,37 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                         # f += [p.parent / x.lstrip(os.sep) for x in t]  # local to global path (pathlib)
                 else:
                     raise Exception(f'{prefix}{p} does not exist')
-            self.fus_files = sorted([x.replace('/', os.sep) for x in f if x.split('.')[-1].lower() in fused_formats])
+            self.img_files = sorted([x.replace('/', os.sep) for x in f if x.split('.')[-1].lower() in fused_formats])
             # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in img_formats])  # pathlib
-            assert self.fus_files, f'{prefix}No fused images found'
+            assert self.img_files, f'{prefix}No fused images found'
         except Exception as e:
             raise Exception(f'{prefix}Error loading data from {path}: {e}\nSee {help_url}')
 
-        n = len(self.fus_files)  # number of fused images
+         # Check cache
+        self.label_files = img2label_paths(self.img_files)  # labels
+        cache_path = (p if p.is_file() else Path(self.label_files[0]).parent).with_suffix('.cache')  # cached labels
+        if cache_path.is_file():
+            cache, exists = torch.load(cache_path), True  # load
+        else:
+            cache, exists = self.cache_labels(cache_path, prefix), False  # cache
+
+        # Display cache
+        nf, nm, ne, nc, n = cache.pop('results')  # found, missing, empty, corrupted, total
+        if exists:
+            d = f"Scanning '{cache_path}' images and labels... {nf} found, {nm} missing, {ne} empty, {nc} corrupted"
+            tqdm(None, desc=prefix + d, total=n, initial=n)  # display cache results
+        assert nf > 0 or not augment, f'{prefix}No labels in {cache_path}. Can not train without labels. See {help_url}'
+
+        # Read cache
+        cache.pop('hash')  # remove hash
+        cache.pop('version')  # remove version
+        labels, shapes, self.segments = zip(*cache.values())
+        self.labels = list(labels)
+        self.shapes = np.array(shapes, dtype=np.float64)
+        self.img_files = list(cache.keys())  # update
+        self.label_files = img2label_paths(cache.keys())  # update
+
+        n = len(self.img_files)  # number of fused images
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index
         nb = bi[-1] + 1  # number of batches
         self.batch = bi  # batch index of image
@@ -421,7 +445,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         self.indices = range(n)
         
     def __len__(self):
-        return len(self.fus_files)
+        return len(self.img_files)
 
     def __getitem__(self, index):
         index = self.indices[index]  # linear, shuffled, or image_weights
@@ -464,6 +488,53 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         mergedImg = np.ascontiguousarray(mergedImg)
 
         return torch.from_numpy(mergedImg), labels_out, self.img_files[index], shapes
+    
+    def cache_labels(self, path=Path('./labels.cache'), prefix=''):
+        # Cache dataset labels, check images and read shapes
+        x = {}  # dict
+        nm, nf, ne, nc = 0, 0, 0, 0  # number missing, found, empty, duplicate
+        pbar = tqdm(zip(self.img_files, self.label_files), desc='Scanning images', total=len(self.img_files))
+        for i, (im_file, lb_file) in enumerate(pbar):
+            try:
+                # verify labels
+                if os.path.isfile(lb_file):
+                    nf += 1  # label found
+                    with open(lb_file, 'r') as f:
+                        l = [x.split() for x in f.read().strip().splitlines()]
+                        if any([len(x) > 8 for x in l]):  # is segment
+                            classes = np.array([x[0] for x in l], dtype=np.float32)
+                            segments = [np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in l]  # (cls, xy1...)
+                            l = np.concatenate((classes.reshape(-1, 1), segments2boxes(segments)), 1)  # (cls, xywh)
+                        l = np.array(l, dtype=np.float32)
+                    if len(l):
+                        assert l.shape[1] == 5, 'labels require 5 columns each'
+                        assert (l >= 0).all(), 'negative labels'
+                        assert (l[:, 1:] <= 1).all(), 'non-normalized or out of bounds coordinate labels'
+                        assert np.unique(l, axis=0).shape[0] == l.shape[0], 'duplicate labels'
+                    else:
+                        ne += 1  # label empty
+                        l = np.zeros((0, 5), dtype=np.float32)
+                else:
+                    nm += 1  # label missing
+                    l = np.zeros((0, 5), dtype=np.float32)
+                x[im_file] = [l, (640, 512), segments] # hardcoded
+            except Exception as e:
+                nc += 1
+                print(f'{prefix}WARNING: Ignoring corrupted image and/or label {im_file}: {e}')
+
+            pbar.desc = f"{prefix}Scanning '{path.parent / path.stem}' images and labels... " \
+                        f"{nf} found, {nm} missing, {ne} empty, {nc} corrupted"
+        pbar.close()
+
+        if nf == 0:
+            print(f'{prefix}WARNING: No labels found in {path}. See {help_url}')
+
+        x['hash'] = get_hash(self.label_files + self.img_files)
+        x['results'] = nf, nm, ne, nc, i + 1
+        x['version'] = 0.1  # cache version
+        torch.save(x, path)  # save for next time
+        logging.info(f'{prefix}New cache created: {path}')
+        return x
 
     @staticmethod
     def collate_fn(batch):
@@ -502,12 +573,14 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 # Fused Ancillary functions ----------------------------------------------------------------------------------------
 def load_fused(self, index):
     # loads 1 image from dataset, returns fused img, hw
-    path = self.fus_files[index]
+    path = self.img_files[index]
     fused = np.load(path)
     assert fused is not None, 'Fused Image Not Found ' + path
 
     h0, w0 = np.shape(fused)[:2]  # orig hw
     return fused, (h0, w0) # img, hw_original, hw_resized
+
+
 
 ## End of custom, begin std
 class LoadImagesAndLabels(Dataset):  # for training/testing
