@@ -64,10 +64,10 @@ def exif_size(img):
     return s
 
 def fused_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=False, cache=False, pad=0.0, rect=False,
-                      rank=-1, world_size=1, workers=8, image_weights=False, quad=False, prefix='', channels=6):
+                      rank=-1, world_size=1, workers=8, image_weights=False, quad=False, prefix=''):
     # Make sure only the first process in DDP process the dataset first, and the following others can use the cache
     with torch_distributed_zero_first(rank):
-        dataset = LoadImagesAndLabels(path, imgsz, batch_size,
+        dataset = LoadFusedAndLabels(path, imgsz, batch_size,
                                       augment=augment,  # augment images
                                       hyp=hyp,  # augmentation hyperparameters
                                       rect=rect,  # rectangular training
@@ -409,19 +409,16 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                     raise Exception(f'{prefix}{p} does not exist')
             self.fus_files = sorted([x.replace('/', os.sep) for x in f if x.split('.')[-1].lower() in fused_formats])
             # self.img_files = sorted([x for x in f if x.suffix[1:].lower() in img_formats])  # pathlib
-            assert self.fus_files, f'{prefix}No images found'
+            assert self.fus_files, f'{prefix}No fused images found'
         except Exception as e:
             raise Exception(f'{prefix}Error loading data from {path}: {e}\nSee {help_url}')
 
-        n = len(shapes)  # number of images
+        n = len(self.fus_files)  # number of fused images
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index
         nb = bi[-1] + 1  # number of batches
         self.batch = bi  # batch index of image
         self.n = n
         self.indices = range(n)
-
-        # Cache images into memory for faster training (WARNING: large datasets may exceed system RAM)
-        self.fuses = [None] * n
         
     def __len__(self):
         return len(self.fus_files)
@@ -432,48 +429,11 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         hyp = self.hyp
 
         # Load image
-        img, (h0, w0), (h, w) = load_fused(self, index)
-        
-        # Letterbox
-        shape = self.batch_shapes[self.batch[index]] if self.rect else self.img_size  # final letterboxed shape
-        img, ratio, pad = letterbox(img, shape, auto=False, scaleup=self.augment)
-        shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
+        fused, (h0, w0) = load_fused(self, index)
 
         labels = self.labels[index].copy()
         if labels.size:  # normalized xywh to pixel xyxy format
-            labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
-
-        if self.augment:
-            # Augment imagespace
-            if not mosaic:
-                img, labels = random_perspective(img, labels,
-                                                 degrees=hyp['degrees'],
-                                                 translate=hyp['translate'],
-                                                 scale=hyp['scale'],
-                                                 shear=hyp['shear'],
-                                                 perspective=hyp['perspective'])
-            
-            
-            #img, labels = self.albumentations(img, labels)
-
-            # Augment colorspace
-            augment_hsv(img, hgain=hyp['hsv_h'], sgain=hyp['hsv_s'], vgain=hyp['hsv_v'])
-
-            # Apply cutouts
-            # if random.random() < 0.9:
-            #     labels = cutout(img, labels)
-            
-            if random.random() < hyp['paste_in']:
-                sample_labels, sample_images, sample_masks = [], [], [] 
-                while len(sample_labels) < 30:
-                    sample_labels_, sample_images_, sample_masks_ = load_samples(self, random.randint(0, len(self.labels) - 1))
-                    sample_labels += sample_labels_
-                    sample_images += sample_images_
-                    sample_masks += sample_masks_
-                    #print(len(sample_labels))
-                    if len(sample_labels) == 0:
-                        break
-                labels = pastein(img, labels, sample_labels, sample_images, sample_masks)
+            labels[:, 1:] = xywhn2xyxy(labels[:, 1:], w, h, padw=pad[0], padh=pad[1])
 
         nL = len(labels)  # number of labels
         if nL:
@@ -481,25 +441,15 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
             labels[:, [2, 4]] /= img.shape[0]  # normalized height 0-1
             labels[:, [1, 3]] /= img.shape[1]  # normalized width 0-1
 
-        if self.augment:
-            # flip up-down
-            if random.random() < hyp['flipud']:
-                img = np.flipud(img)
-                if nL:
-                    labels[:, 2] = 1 - labels[:, 2]
-
-            # flip left-right
-            if random.random() < hyp['fliplr']:
-                img = np.fliplr(img)
-                if nL:
-                    labels[:, 1] = 1 - labels[:, 1]
-
         labels_out = torch.zeros((nL, 6))
         if nL:
             labels_out[:, 1:] = torch.from_numpy(labels)
 
         # Convert
+        print("labels = "+str(self.labels))
+        print("img before mod .shape = "+img.shape)
         img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
+        print("img after mod .shape = "+img.shape)
         img = np.ascontiguousarray(img)
 
         return torch.from_numpy(img), labels_out, self.img_files[index], shapes
@@ -540,24 +490,13 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
 # Fused Ancillary functions ----------------------------------------------------------------------------------------
 def load_fused(self, index):
-    # loads 1 image from dataset, returns img, original hw, resized hw
-    fus = self.fuses[index]
-    if img is None:  # not cached, always true at this point
-        path = self.fus_files[index]
+    # loads 1 image from dataset, returns fused img, hw
+    path = self.fus_files[index]
+    fused = np.load(path)
+    assert fused is not None, 'Fused Image Not Found ' + path
 
-        fused = bp.load(path)
-        
-        assert fused is not None, 'Fused Image Not Found ' + path
-
-        h0, w0 = np.shape(fused)[:2]  # orig hw
-        r = self.img_size / max(h0, w0)  # resize image to img_size
-        if r != 1:  # always resize down, only resize up if training with augmentation
-            interp = cv2.INTER_AREA if r < 1 and not self.augment else cv2.INTER_LINEAR
-            img = cv2.resize(img, (int(w0 * r), int(h0 * r)), interpolation=interp)
-        return img, (h0, w0), img.shape[:2]  # img, hw_original, hw_resized
-    else:
-        return self.imgs[index], self.img_hw0[index], self.img_hw[index]  # img, hw_original, hw_resized
-
+    h0, w0 = np.shape(fused)[:2]  # orig hw
+    return fused, (h0, w0) # img, hw_original, hw_resized
 
 ## End of custom, begin std
 class LoadImagesAndLabels(Dataset):  # for training/testing
