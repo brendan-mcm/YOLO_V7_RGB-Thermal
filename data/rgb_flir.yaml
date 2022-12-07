@@ -1,0 +1,10 @@
+# FLIR RGB Vid 1:1 dataset
+
+# directory or path
+train: ./single_flir/rgb_video/train/images
+test: ./single_flir/rgb_video/test/images
+val: ./single_flir/rgb_video/val/images
+
+# Class info (rgb + mods)
+nc: 13
+names: [ 'person', 'bike', 'car', 'motor', 'truck', 'light', 'hydrant', 'sign', 'other vehicle', 'rider', 'face', 'dog', 'license plate' ]

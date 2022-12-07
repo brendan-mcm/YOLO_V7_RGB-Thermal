@@ -67,6 +67,7 @@ def test(data,
     if half:
         model.half()
 
+    print("Made it to configuration")
     # Configure
     model.eval()
     if isinstance(data, str):
@@ -78,6 +79,8 @@ def test(data,
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
 
+    print("Made past dataset")
+    
     # Logging
     log_imgs = 0
     if wandb_logger and wandb_logger.wandb:
@@ -87,6 +90,7 @@ def test(data,
         if device.type != 'cpu':
             model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
+        print("datat[task] = "+data[task])
         dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
