@@ -458,9 +458,9 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         print("index = "+str(index), file=sys.stderr)
         fused, (h1, w1) = load_fused(self, index)
         print("Fused shape = ", np.shape(fused), file=sys.stderr)
-        print("PRIOR TO CALL", file=sys.stderr)
+        reconstr_merged = np.dsplit(fused, 2)
+        print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
 
-        reconstr_merged = fused # # np.dsplit(fused, 2)
 
         h0, w0 = reconstr_merged[0].shape
         h, w = reconstr_merged[0].shape
@@ -584,7 +584,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 def load_fused(self, index):
     # loads 1 image from dataset, returns fused img, hw
     path = self.img_files[index]
-    print("load path = ", path)
+    print("load path = "+path, file=sys.stderr)
     
     fused = np.load(path)
     assert fused is not None, 'Fused Image Not Found ' + path
