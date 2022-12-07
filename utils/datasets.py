@@ -88,7 +88,7 @@ def fused_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=Fal
                         num_workers=nw,
                         sampler=sampler,
                         pin_memory=True,
-                        collate_fn=LoadImagesAndLabels.collate_fn4 if quad else LoadImagesAndLabels.collate_fn)
+                        collate_fn=LoadFusedAndLabels.collate_fn4 if quad else LoadFusedAndLabels.collate_fn)
     return dataloader, dataset
 
 def create_dataloader(path, imgsz, batch_size, stride, opt, hyp=None, augment=False, cache=False, pad=0.0, rect=False,
@@ -429,30 +429,41 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         hyp = self.hyp
 
         # Load image
-        fused, (h0, w0) = load_fused(self, index)
+        fused = load_fused(self, index)
+        reconstr_merged = np.dsplit(fused, 2)
+
+        h0, w0 = reconstr_merged[0].shape
+        h, w = reconstr_merged[0].shape
+        
+        imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False, scaleup=self.augment)
+        imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False, scaleup=self.augment)
+        
+        ch_1, ch_2, ch_3 = cv2.split(imgRgb)
+        ch_4, ch_5, ch_6 = cv2.split(imgTh)
+
+        mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+
+        shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
         labels = self.labels[index].copy()
         if labels.size:  # normalized xywh to pixel xyxy format
-            labels[:, 1:] = xywhn2xyxy(labels[:, 1:], w, h, padw=pad[0], padh=pad[1])
+            labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
 
         nL = len(labels)  # number of labels
         if nL:
             labels[:, 1:5] = xyxy2xywh(labels[:, 1:5])  # convert xyxy to xywh
-            labels[:, [2, 4]] /= img.shape[0]  # normalized height 0-1
-            labels[:, [1, 3]] /= img.shape[1]  # normalized width 0-1
+            labels[:, [2, 4]] /= imgRgb.shape[0]  # normalized height 0-1
+            labels[:, [1, 3]] /= imgRgb.shape[1]  # normalized width 0-1
 
         labels_out = torch.zeros((nL, 6))
         if nL:
             labels_out[:, 1:] = torch.from_numpy(labels)
 
         # Convert
-        print("labels = "+str(self.labels))
-        print("img before mod .shape = "+img.shape)
-        img = img[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 3x416x416
-        print("img after mod .shape = "+img.shape)
-        img = np.ascontiguousarray(img)
+        mergedImg = mergedImg[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 6x640x640
+        mergedImg = np.ascontiguousarray(mergedImg)
 
-        return torch.from_numpy(img), labels_out, self.img_files[index], shapes
+        return torch.from_numpy(mergedImg), labels_out, self.img_files[index], shapes
 
     @staticmethod
     def collate_fn(batch):
@@ -1131,7 +1142,6 @@ def replicate(img, labels):
         labels = np.append(labels, [[labels[i, 0], x1a, y1a, x2a, y2a]], axis=0)
 
     return img, labels
-
 
 def letterbox(img, new_shape=(640, 640), color=(114, 114, 114), auto=True, scaleFill=False, scaleup=True, stride=32):
     # Resize and pad image while meeting stride-multiple constraints
