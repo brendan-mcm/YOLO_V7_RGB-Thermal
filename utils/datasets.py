@@ -416,7 +416,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
          # Check cache
         self.label_files = img2label_paths(self.img_files)  # labels
         cache_path = (p if p.is_file() else Path(self.label_files[0]).parent).with_suffix('.cache')  # cached labels
-        if cache_path.is_file():
+        if False: # cache_path.is_file():
             cache, exists = torch.load(cache_path), True  # load
         else:
             print("Going to cache labels with cache_path = "+str(cache_path))
@@ -496,7 +496,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         nm, nf, ne, nc = 0, 0, 0, 0  # number missing, found, empty, duplicate
         pbar = tqdm(zip(self.img_files, self.label_files), desc='Scanning images', total=len(self.img_files))
         for i, (im_file, lb_file) in enumerate(pbar):
-            print("im_file = "+im_file+" lb_file = "+lb_file)
+           
             try:
                 # verify labels
                 if os.path.isfile(lb_file):
