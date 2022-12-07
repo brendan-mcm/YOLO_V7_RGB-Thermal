@@ -522,6 +522,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                 x[im_file] = [l, (640, 512), segments] # hardcoded
             except Exception as e:
                 nc += 1
+                print("Corrupted = "+ im_file+" lb_file = "+lb_file)
                 print(f'{prefix}WARNING: Ignoring corrupted image and/or label {im_file}: {e}')
 
             pbar.desc = f"{prefix}Scanning '{path.parent / path.stem}' images and labels... " \
