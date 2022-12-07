@@ -499,6 +499,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
            
             try:
                 # verify labels
+                segments = []  # instance segments
                 if os.path.isfile(lb_file):
                     nf += 1  # label found
                     with open(lb_file, 'r') as f:
