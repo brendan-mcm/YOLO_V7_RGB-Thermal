@@ -455,13 +455,13 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         hyp = self.hyp
 
         # Load image
-        print("index = "+str(index), file=sys.stderr)
+        # print("index = "+str(index), file=sys.stderr)
         fused, (h1, w1) = load_fused(self, index)
-        print("Fused shape = ", np.shape(fused), file=sys.stderr)
+        # print("Fused shape = ", np.shape(fused), file=sys.stderr)
         reconstr_merged = np.dsplit(fused, 2)
-        print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
+        # print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
 
-        print("reconstr[o] shape ="+str(np.shape(reconstr_merged[0])), file=sys.stderr)
+        # print("reconstr[o] shape ="+str(np.shape(reconstr_merged[0])), file=sys.stderr)
         h0, w0 = reconstr_merged[0].shape[:2]
         h, w = reconstr_merged[0].shape[:2]
         
@@ -514,7 +514,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                             segments = [np.array(x[1:], dtype=np.float32).reshape(-1, 2) for x in l]  # (cls, xy1...)
                             l = np.concatenate((classes.reshape(-1, 1), segments2boxes(segments)), 1)  # (cls, xywh)
                         l = np.array(l, dtype=np.float32)
-                    print("Making it here, l = "+str(l))
+                    # print("Making it here, l = "+str(l))
                     if len(l):
                         assert l.shape[1] == 5, 'labels require 5 columns each'
                         assert (l >= 0).all(), 'negative labels'
@@ -584,13 +584,13 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 def load_fused(self, index):
     # loads 1 image from dataset, returns fused img, hw
     path = self.img_files[index]
-    print("load path = "+path, file=sys.stderr)
+    # ("load path = "+path, file=sys.stderr)
     
     fused = np.load(path)
     assert fused is not None, 'Fused Image Not Found ' + path
 
     h0, w0 = np.shape(fused)[:2]  # orig hw
-    print("What is being fused")
+    # print("What is being fused")
     return fused, (h0, w0) # img, hw_original, hw_resized
 
 
