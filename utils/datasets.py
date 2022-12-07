@@ -461,9 +461,9 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         reconstr_merged = np.dsplit(fused, 2)
         print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
 
-
-        h0, w0 = reconstr_merged[0].shape
-        h, w = reconstr_merged[0].shape
+        print("reconstr[o] shape ="+str(np.shape(reconstr_merged[0])), file=sys.stderr)
+        h0, w0 = reconstr_merged[0].shape[:2]
+        h, w = reconstr_merged[0].shape[:2]
         
         imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False, scaleup=self.augment)
         imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False, scaleup=self.augment)
