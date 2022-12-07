@@ -457,7 +457,8 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         print("index = "+str(index))
         fused = load_fused(self, index)
         print("Fused shape = ", np.shape(fused))
-        # reconstr_merged = np.dsplit(fused, 2)
+        print("PRIOR TO CALL")
+        reconstr_merged = np.dsplit(fused, 2)
 
         h0, w0 = reconstr_merged[0].shape
         h, w = reconstr_merged[0].shape
@@ -523,7 +524,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                 else:
                     nm += 1  # label missing
                     l = np.zeros((0, 5), dtype=np.float32)
-                x[im_file] = [l, (640, 512), segments] # hardcoded
+                x[im_file] = [l, np.array((640, 512), dtype=int), segments] # hardcoded
             except Exception as e:
                 nc += 1
                 print("Corrupted = "+ im_file+" lb_file = "+lb_file)
@@ -581,7 +582,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 def load_fused(self, index):
     # loads 1 image from dataset, returns fused img, hw
     path = self.img_files[index]
-    print("load path = ")
+    print("load path = ", path)
     
     fused = np.load(path)
     assert fused is not None, 'Fused Image Not Found ' + path
@@ -1451,7 +1452,7 @@ def pastein(image, labels, sample_labels, sample_images, sample_masks):
                     if len(labels):
                         labels = np.concatenate((labels, [[sample_labels[sel_ind], *box]]), 0)
                     else:
-                        labels = np.array([[sample_labels[sel_ind], *box]])
+                        labels = np.array([[sample_labels[sel_ind], *box]]) #TO DO CHECK?
                               
                     image[ymin:ymin+r_h, xmin:xmin+r_w] = temp_crop
 
