@@ -454,8 +454,10 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         hyp = self.hyp
 
         # Load image
+        print("index = "+str(index))
         fused = load_fused(self, index)
-        reconstr_merged = np.dsplit(fused, 2)
+        print("Fused shape = ", np.shape(fused))
+        # reconstr_merged = np.dsplit(fused, 2)
 
         h0, w0 = reconstr_merged[0].shape
         h, w = reconstr_merged[0].shape
@@ -579,10 +581,13 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 def load_fused(self, index):
     # loads 1 image from dataset, returns fused img, hw
     path = self.img_files[index]
+    print("load path = ")
+    
     fused = np.load(path)
     assert fused is not None, 'Fused Image Not Found ' + path
 
     h0, w0 = np.shape(fused)[:2]  # orig hw
+    print("What is being fused")
     return fused, (h0, w0) # img, hw_original, hw_resized
 
 
