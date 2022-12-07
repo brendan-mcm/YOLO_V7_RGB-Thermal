@@ -317,7 +317,7 @@ def train(hyp, opt, device, tb_writer=None):
             # Broadcast if DDP
             if rank != -1:
                 indices = (torch.tensor(dataset.indices) if rank == 0 else torch.zeros(dataset.n)).int()
-                dist.broadcast(indices, 0)
+                dist.broadcast(indices, 0) # broadcast ValueError ?
                 if rank != 0:
                     dataset.indices = indices.cpu().numpy()
 
@@ -388,6 +388,7 @@ def train(hyp, opt, device, tb_writer=None):
                 pbar.set_description(s)
 
                 # Plot
+                plots = False # ADDED
                 if plots and ni < 10:
                     f = save_dir / f'train_batch{ni}.jpg'  # filename
                     Thread(target=plot_images, args=(imgs, targets, paths, f), daemon=True).start()
