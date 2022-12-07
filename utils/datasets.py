@@ -455,10 +455,11 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         # Load image
         print("index = "+str(index))
-        fused, h1, w1 = load_fused(self, index)
+        fused, (h1, w1) = load_fused(self, index)
         print("Fused shape = ", np.shape(fused))
         print("PRIOR TO CALL")
-        reconstr_merged = np.dsplit(fused, 2)
+
+        reconstr_merged = fused # # np.dsplit(fused, 2)
 
         h0, w0 = reconstr_merged[0].shape
         h, w = reconstr_merged[0].shape
