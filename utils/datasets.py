@@ -455,7 +455,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         # Load image
         print("index = "+str(index))
-        fused = load_fused(self, index)
+        fused, h1, w1 = load_fused(self, index)
         print("Fused shape = ", np.shape(fused))
         print("PRIOR TO CALL")
         reconstr_merged = np.dsplit(fused, 2)
@@ -524,7 +524,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                 else:
                     nm += 1  # label missing
                     l = np.zeros((0, 5), dtype=np.float32)
-                x[im_file] = [l, np.array((640, 512), dtype=int), segments] # hardcoded
+                x[im_file] = [l, (640, 512), segments] # hardcoded
             except Exception as e:
                 nc += 1
                 print("Corrupted = "+ im_file+" lb_file = "+lb_file)
