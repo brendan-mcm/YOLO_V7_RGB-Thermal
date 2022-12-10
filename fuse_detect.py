@@ -17,7 +17,7 @@ from utils.plots import plot_one_box
 from utils.torch_utils import select_device, load_classifier, time_synchronized, TracedModel
 
 
-def detect(save_img=False):
+def detect(save_img=True): # changed default
     source, weights, view_img, save_txt, imgsz, trace = opt.source, opt.weights, opt.view_img, opt.save_txt, opt.img_size, not opt.no_trace
     save_img = not opt.nosave and not source.endswith('.txt')  # save inference images
     webcam = source.isnumeric() or source.endswith('.txt') or source.lower().startswith(
@@ -69,7 +69,7 @@ def detect(save_img=False):
     old_img_b = 1
 
     t0 = time.time()
-    for path, img, im0s, vid_cap in dataset:
+    for path, img, im0s, vid_cap, img_rgb, img_th in dataset:
         img = torch.from_numpy(img).to(device)
         img = img.half() if half else img.float()  # uint8 to fp16/32
         img /= 255.0  # 0 - 255 to 0.0 - 1.0
@@ -119,7 +119,7 @@ def detect(save_img=False):
                     s += f"{n} {names[int(c)]}{'s' * (n > 1)}, "  # add to string
 
                 # Write results
-                save_txt = True
+                # save_txt = True
                 for *xyxy, conf, cls in reversed(det):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
@@ -128,9 +128,10 @@ def detect(save_img=False):
                         #with open(txt_path + '.txt', 'w') as f:
                         #    f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
-                    if False: # save_img or view_img:  # Add bbox to image
+                    if save_img or view_img: # save_img or view_img:  # Add bbox to image
                         label = f'{names[int(cls)]} {conf:.2f}'
-                        plot_one_box(xyxy, im0, label=label, color=colors[int(cls)], line_thickness=1)
+                        plot_one_box(xyxy, img_rgb, label=label, color=colors[int(cls)], line_thickness=1)
+                        plot_one_box(xyxy, img_th, label=label, color=colors[int(cls)], line_thickness=1)
 
             # Print time (inference + NMS)
             print(f'{s}Done. ({(1E3 * (t2 - t1)):.1f}ms) Inference, ({(1E3 * (t3 - t2)):.1f}ms) NMS')
@@ -141,10 +142,11 @@ def detect(save_img=False):
                 cv2.waitKey(1)  # 1 millisecond
 
             # Save results (image with detections)
-            if False: # save_img:
+            if save_img: # save_img:
                 if dataset.mode == 'image':
-                    cv2.imwrite(save_path, im0)
-                    print(f" The image with the result is saved in: {save_path}")
+                    cv2.imwrite(save_path+"_rgb.jpg", img_rgb)
+                    cv2.imwrite(save_path+"_th.jpg", img_th)
+                    print(f" The images with the results are saved in: {save_path}")
                 else:  # 'video' or 'stream'
                     if vid_path != save_path:  # new video
                         vid_path = save_path

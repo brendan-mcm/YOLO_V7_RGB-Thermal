@@ -198,8 +198,12 @@ class LoadFusedImages:  # for inference
         assert fused is not None, 'Fused Image Not Found ' + path
 
         reconstr_merged = np.dsplit(fused, 2)
+        img_rgb = reconstr_merged[0]
+        img_th = reconstr_merged[1]
+
         h0, w0 = reconstr_merged[0].shape[:2]
         h, w = reconstr_merged[0].shape[:2]
+
         
         imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False) # may be a little off
         imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False)
@@ -212,7 +216,7 @@ class LoadFusedImages:  # for inference
         mergedImg = mergedImg[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 6x640x640
         mergedImg = np.ascontiguousarray(mergedImg)
 
-        return path, mergedImg, fused, self.cap
+        return path, mergedImg, fused, self.cap, img_rgb, img_th
 
     def __len__(self):
         return self.nf  # number of files
