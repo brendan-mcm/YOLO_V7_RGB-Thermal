@@ -155,6 +155,69 @@ class _RepeatSampler(object):
             yield from iter(self.sampler)
 
 
+# begin custom dataset class
+class LoadFusedImages:  # for inference
+    def __init__(self, path, img_size=640, stride=32):
+        p = str(Path(path).absolute())  # os-agnostic absolute path
+        if '*' in p:
+            files = sorted(glob.glob(p, recursive=True))  # glob
+        elif os.path.isdir(p):
+            files = sorted(glob.glob(os.path.join(p, '*.*')))  # dir
+        elif os.path.isfile(p):
+            files = [p]  # files
+        else:
+            raise Exception(f'ERROR: {p} does not exist')
+
+        images = [x for x in files if x.split('.')[-1].lower() in fused_formats]
+        ni = len(images)
+
+        self.img_size = img_size
+        self.stride = stride
+        self.files = images
+        self.nf = ni  # number of files
+        self.video_flag = [False] * ni
+        self.mode = 'image'
+        self.cap = None
+
+        assert self.nf > 0, f'No fused images found in {p}. ' \
+                            f'Supported formats are:\nimages: {fused_formats}\n'
+
+    def __iter__(self):
+        self.count = 0
+        return self
+
+    def __next__(self):
+        if self.count == self.nf:
+            raise StopIteration
+        path = self.files[self.count]
+
+        # Read image
+        self.count += 1
+
+        fused = np.load(path)
+        assert fused is not None, 'Fused Image Not Found ' + path
+
+        reconstr_merged = np.dsplit(fused, 2)
+        h0, w0 = reconstr_merged[0].shape[:2]
+        h, w = reconstr_merged[0].shape[:2]
+        
+        imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False) # may be a little off
+        imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False)
+        
+        ch_1, ch_2, ch_3 = cv2.split(imgRgb)
+        ch_4, ch_5, ch_6 = cv2.split(imgTh)
+
+        mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+
+        mergedImg = mergedImg[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 6x640x640
+        mergedImg = np.ascontiguousarray(mergedImg)
+
+        return path, mergedImg, fused, self.cap
+
+    def __len__(self):
+        return self.nf  # number of files
+
+
 class LoadImages:  # for inference
     def __init__(self, path, img_size=640, stride=32):
         p = str(Path(path).absolute())  # os-agnostic absolute path
