@@ -198,8 +198,8 @@ class LoadFusedImages:  # for inference
         assert fused is not None, 'Fused Image Not Found ' + path
 
         reconstr_merged = np.dsplit(fused, 2)
-        img_rgb = reconstr_merged[0]
-        img_th = reconstr_merged[1]
+        img_rgb = np.float32(reconstr_merged[0])
+        img_th = np.float32(reconstr_merged[1])
 
         h0, w0 = reconstr_merged[0].shape[:2]
         h, w = reconstr_merged[0].shape[:2]
