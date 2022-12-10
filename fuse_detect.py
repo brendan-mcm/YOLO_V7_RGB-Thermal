@@ -1,11 +1,13 @@
 import argparse
 import time
+import sys
 from pathlib import Path
 
 import cv2
 import torch
 import torch.backends.cudnn as cudnn
 from numpy import random
+
 
 from models.experimental import attempt_load
 from utils.datasets import LoadStreams, LoadFusedImages
@@ -122,8 +124,9 @@ def detect(save_img=False):
                     if save_txt:  # Write to file
                         xywh = (xyxy2xywh(torch.tensor(xyxy).view(1, 4)) / gn).view(-1).tolist()  # normalized xywh
                         line = (cls, *xywh, conf) if opt.save_conf else (cls, *xywh)  # label format
-                        with open(txt_path + '.txt', 'w') as f:
-                            f.write(('%g ' * len(line)).rstrip() % line + '\n')
+                        print("res line = "+str(line), file=sys.stderr)
+                        #with open(txt_path + '.txt', 'w') as f:
+                        #    f.write(('%g ' * len(line)).rstrip() % line + '\n')
 
                     if False: # save_img or view_img:  # Add bbox to image
                         label = f'{names[int(cls)]} {conf:.2f}'
