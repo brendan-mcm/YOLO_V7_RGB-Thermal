@@ -39,7 +39,7 @@ def detect(save_img=True): # changed default
     imgsz = check_img_size(imgsz, s=stride)  # check img_size (not cv2 specific)
 
     if trace:
-        model = TracedModel(model, device, opt.img_size)
+        model = TracedModel(model, device, opt.img_size, channels=6)
 
     if half:
         model.half()  # to FP16
