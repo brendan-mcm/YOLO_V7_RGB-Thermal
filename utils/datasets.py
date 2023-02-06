@@ -197,21 +197,41 @@ class LoadFusedImages:  # for inference
         fused = np.load(path)
         assert fused is not None, 'Fused Image Not Found ' + path
 
+        num_channels = np.shape(fused)[-1]
+        if num_channels == 7: ## 7th channel is assumed to be lum in int format
+            lum_vals = fused[:,:,6].astype(np.uint8)
+            lum_img = np.asarray(np.dstack((lum_vals, lum_vals, lum_vals)), dtype=np.uint8)
+            fused = np.delete(fused, 6, axis=2)
+        
         reconstr_merged = np.dsplit(fused, 2)
+
         img_rgb = np.float32(reconstr_merged[0])
         img_th = np.float32(reconstr_merged[1])
+        # print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
 
+        # print("reconstr[o] shape ="+str(np.shape(reconstr_merged[0])), file=sys.stderr)
         h0, w0 = reconstr_merged[0].shape[:2]
         h, w = reconstr_merged[0].shape[:2]
+        
+        # For lum: issue is w/ letterbox 
+        imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False, scaleup=self.augment)
+        imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False, scaleup=self.augment)
 
-        
-        imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False) # may be a little off
-        imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False)
-        
         ch_1, ch_2, ch_3 = cv2.split(imgRgb)
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
-        mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+        if num_channels == 7:
+            lum_img, _, _ = letterbox(lum_img, (640, 640), auto=False, scaleup=self.augment)
+            # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
+            lum_vals, _, _ = cv2.split(lum_img)
+            # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
+            # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)
+            # print("ch 1 ", ch_1)
+            
+            mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
+        else:
+            mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+
 
         mergedImg = mergedImg[:, :, ::-1].transpose(2, 0, 1)  # BGR to RGB, to 6x640x640
         mergedImg = np.ascontiguousarray(mergedImg)
@@ -548,10 +568,12 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         if num_channels == 7:
             lum_img, _, _ = letterbox(lum_img, (640, 640), auto=False, scaleup=self.augment)
-            print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
+            # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
-            print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
-            print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)
+            # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
+            # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)
+            print("ch 1 ", ch_1)
+            
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
         else:
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
