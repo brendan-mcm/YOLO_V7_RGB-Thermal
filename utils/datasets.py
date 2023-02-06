@@ -221,7 +221,7 @@ class LoadFusedImages:  # for inference
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
         if num_channels == 7:
-            lum_img, _, _ = letterbox(lum_img, (640, 640), auto=False, scaleup=self.augment)
+            lum_img, _, _ = letterbox(np.float32(lum_img), (640, 640), auto=False, scaleup=self.augment)
             # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
             # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
@@ -567,7 +567,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
         if num_channels == 7:
-            lum_img, _, _ = letterbox(lum_img, (640, 640), auto=False, scaleup=self.augment)
+            lum_img, _, _ = letterbox(np.float32(lum_img), (640, 640), auto=False, scaleup=self.augment)
             # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
             # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
