@@ -530,7 +530,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         if num_channels == 7: ## 7th channel is assumed to be lum in int format
             lum_vals = fused[:,:,6].astype(np.uint8)
             lum_img = np.asarray(np.dstack((lum_vals, lum_vals, lum_vals)), dtype=np.uint8)
-            fused = np.delete(arr, 6, axis=2)
+            fused = np.delete(fused, 6, axis=2)
         
         reconstr_merged = np.dsplit(fused, 2)
         # print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
