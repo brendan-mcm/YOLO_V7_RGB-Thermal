@@ -221,7 +221,7 @@ class LoadFusedImages:  # for inference
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
         if num_channels == 7:
-            lum_img, _, _ = letterbox(np.float32(lum_img), (640, 640), auto=False, scaleup=self.augment)
+            lum_img, _, _ = letterbox(np.float64(lum_img), (640, 640), auto=False, scaleup=self.augment)
             # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
             # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
@@ -567,17 +567,11 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
         if num_channels == 7:
-            lum_img, _, _ = letterbox(np.float32(lum_img), (640, 640), auto=False, scaleup=self.augment)
+            lum_img, _, _ = letterbox(np.float64(lum_img), (640, 640), auto=False, scaleup=self.augment)
             # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
             # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
-            # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)
-            print("ch 1 ", ch_1)
-            print("ch 1 ", ch_2)
-            print("ch 1 ", ch_3)
-            print("lum_vals type ", type(lum_vals[0][0]))
-            print("chan type ", type(ch_1[0][0]))
-            
+            # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)    
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
         else:
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
