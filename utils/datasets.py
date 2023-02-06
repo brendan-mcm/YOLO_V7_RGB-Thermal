@@ -573,6 +573,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
             # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
             # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)
             print("ch 1 ", ch_1)
+            print("lum_vals ", lum_vals)
             
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
         else:
