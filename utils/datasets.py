@@ -548,7 +548,9 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         if num_channels == 7:
             lum_img, _, _ = letterbox(lum_img, (640, 640), auto=False, scaleup=self.augment)
+            print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
+
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
         else:
             mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
