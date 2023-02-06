@@ -518,13 +518,20 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
     def __getitem__(self, index):
         index = self.indices[index]  # linear, shuffled, or image_weights
-
         hyp = self.hyp
 
         # Load image
         # print("index = "+str(index), file=sys.stderr)
         fused, (h1, w1) = load_fused(self, index)
         # print("Fused shape = ", np.shape(fused), file=sys.stderr)
+        # to change for lum
+        
+        num_channels = np.shape(fused)[-1]
+        if num_channels == 7: ## 7th channel is assumed to be lum in int format
+            lum_vals = arr[:,:,6].astype(np.uint8)
+            lum_img = np.asarray(np.dstack((lum_vals, lum_vals, lum_vals)), dtype=np.uint8)
+            fused = np.delete(arr, 6, axis=2)
+        
         reconstr_merged = np.dsplit(fused, 2)
         # print("POST CALL reconstr shape = "+str(np.shape(reconstr_merged)), file=sys.stderr)
 
@@ -532,13 +539,19 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         h0, w0 = reconstr_merged[0].shape[:2]
         h, w = reconstr_merged[0].shape[:2]
         
+        # For lum: issue is w/ letterbox 
         imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False, scaleup=self.augment)
         imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False, scaleup=self.augment)
-        
+
         ch_1, ch_2, ch_3 = cv2.split(imgRgb)
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
-        mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+        if num_channels == 7:
+            lum_img, _, _ = letterbox(lum_img, (640, 640), auto=False, scaleup=self.augment)
+            lum_vals, _, _ = cv2.split(lum_img)
+            mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
+        else:
+            mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
 
         shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
 
