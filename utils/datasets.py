@@ -572,8 +572,13 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         if mosaic:
             # Load mosaic
-            mergedImg, labels = load_mosaic(self, index, True)
+            if random.random() < .8: # maybe change to 1 for now?
+                mergedImg, labels = load_mosaic(self, index, True)
+            else:
+                mergedImg, label = load_mosaic9(self, index, True)
             shapes = None
+            
+
         else:
         
             # For lum: issue is w/ letterbox
@@ -1084,7 +1089,7 @@ def hist_equalize(img, clahe=True, bgr=False):
     return cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR if bgr else cv2.COLOR_YUV2RGB)  # convert YUV image to RGB
 
 
-def load_mosaic(self, index, fused = False):
+def load_mosaic(self, index, fused=False):
     # loads images in a 4-mosaic
 
     labels4, segments4 = [], []
@@ -1146,7 +1151,7 @@ def load_mosaic(self, index, fused = False):
     return img4, labels4
 
 
-def load_mosaic9(self, index):
+def load_mosaic9(self, index, fused=False):
     # loads images in a 9-mosaic
 
     labels9, segments9 = [], []
@@ -1154,7 +1159,10 @@ def load_mosaic9(self, index):
     indices = [index] + random.choices(self.indices, k=8)  # 8 additional image indices
     for i, index in enumerate(indices):
         # Load image
-        img, _, (h, w) = load_image(self, index)
+        if fused:
+            img, _, (h, w) = load_fused(self, index)
+        else:
+            img, _, (h, w) = load_image(self, index)
 
         # place img in img9
         if i == 0:  # center
