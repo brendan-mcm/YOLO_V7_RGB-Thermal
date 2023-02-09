@@ -550,7 +550,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         # Load image
         # print("index = "+str(index), file=sys.stderr)
-        fused, (h1, w1) = load_fused(self, index)
+        fused, (h0, w0), (h1, w1) = load_fused(self, index)
         # print("Fused shape = ", np.shape(fused), file=sys.stderr)
         # to change for lum
         
@@ -706,16 +706,26 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
 # Fused Ancillary functions ----------------------------------------------------------------------------------------
 def load_fused(self, index):
-    # loads 1 image from dataset, returns fused img, hw
+    # loads 1 image from dataset, returns fused img, hw. Assume not cached.
+
     path = self.img_files[index]
-    # ("load path = "+path, file=sys.stderr)
-    
     fused = np.load(path)
     assert fused is not None, 'Fused Image Not Found ' + path
+    h0, w0, num_channels = np.shape(fused)  # orig hw
 
-    h0, w0 = np.shape(fused)[:2]  # orig hw
-    # print("What is being fused")
-    return fused, (h0, w0) # img, hw_original, hw_resized
+
+    # where split and scaling should take place
+    r = self.img_size / max(h0, w0)
+    if r != 1: # always resize down, only up if w/ aug
+        interp = cv2.INTER_AREA if r < 1 and not self.augment else cv2.INTER_LINEAR
+        reconstr_merged = np.dsplit(fused, 2)
+        img_rgb = cv2.resize(reconstr_merged[0], (int(w0 * r), int(h0 * r)), interpolation=interp)
+        img_th = cv2.resize(reconstr_merged[1], (int(w0 * r), int(h0 * r)), interpolation=interp)
+        ch_1, ch_2, ch_3 = cv2.split(img_rgb)
+        ch_4, ch_5, ch_6 = cv2.split(img_th)
+        fused = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+
+    return fused, (h0, w0), np.shape(fused)[:2] # img, hw_original, hw_resized
 
 
 
