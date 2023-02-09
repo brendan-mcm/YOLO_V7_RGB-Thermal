@@ -613,6 +613,11 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
             if labels.size:  # normalized xywh to pixel xyxy format
                 labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
 
+        # if self.augment:
+            # if not mosiac random_perspective
+
+            # augment colorspace
+
         
         
         # end custom section
