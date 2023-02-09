@@ -546,7 +546,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
     def __getitem__(self, index):
         index = self.indices[index]  # linear, shuffled, or image_weights
         hyp = self.hyp
-        mosaic = self.mosaic and random.random() < hyp['mosaic']
+        mosaic = self.mosaic # and random.random() < hyp['mosaic']
 
         # Load image
         # print("index = "+str(index), file=sys.stderr)
@@ -578,6 +578,15 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                 mergedImg, labels = load_mosaic9(self, index, True)
             shapes = None
 
+            if random.random() < 1.0: # hyp['mixup']: for now
+                if random.random() < .8:
+                    img2, labels2 = load_mosaic(self, random.randint(0, len(self.labels) - 1))
+                else:
+                    img2, labels2 = load_mosaic9(self, random.randint(0, len(self.labels) - 1))
+                r = np.random.beta(8.0, 8.0) # mixup ratio, alpha=beta=8.0
+                mergedImg = (mergedImg * r + img2 * (1 - r)).astype(np.uint8)
+                labels = np.concatenate((labels, labels2), 0)
+            
 
         else:
         
