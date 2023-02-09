@@ -572,8 +572,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         if mosaic:
             # Load mosaic
-            if random.random() < 0.8:
-                mergedImg, labels = load_mosaic(self, index, True)
+            mergedImg, labels = load_mosaic(self, index, True)
             shapes = None
         else:
         
