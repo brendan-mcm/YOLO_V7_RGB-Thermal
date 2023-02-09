@@ -214,8 +214,8 @@ class LoadFusedImages:  # for inference
         h, w = reconstr_merged[0].shape[:2]
         
         # For lum: issue is w/ letterbox 
-        imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False, scaleup=self.augment)
-        imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False, scaleup=self.augment)
+        imgRgb, ratio, pad = letterbox(reconstr_merged[0], self.img_size, auto=False, scaleup=self.augment)
+        imgTh, _, _ = letterbox(reconstr_merged[1], self.img_size, auto=False, scaleup=self.augment)
 
         ch_1, ch_2, ch_3 = cv2.split(imgRgb)
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
@@ -470,12 +470,15 @@ def img2label_paths(img_paths):
 ## start of custom class
 
 class LoadFusedAndLabels(Dataset):  # for training/testing
-    def __init__(self, path, img_size=640, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
+    def __init__(self, path, img_size=640, batch_size=16, augment=True, hyp=None, rect=False, image_weights=False,
                  cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
         self.img_size = img_size
         self.augment = augment
         self.hyp = hyp
         self.image_weights = image_weights
+        self.rect = False if image_weights else rect
+        self.mosaic = self.augment and not self.rect  # load 4 images at a time into a mosaic (only during training)
+        self.mosaic_border = [-img_size // 2, -img_size // 2]
         self.stride = stride
         self.path = path        
         #self.albumentations = Albumentations() if augment else None
@@ -504,10 +507,10 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
          # Check cache
         self.label_files = img2label_paths(self.img_files)  # labels
         cache_path = (p if p.is_file() else Path(self.label_files[0]).parent).with_suffix('.cache')  # cached labels
-        if False: # cache_path.is_file():
+        if cache_path.is_file():
             cache, exists = torch.load(cache_path), True  # load
         else:
-            print("Going to cache labels with cache_path = "+str(cache_path))
+            # print("Going to cache labels with cache_path = "+str(cache_path))
             cache, exists = self.cache_labels(cache_path, prefix), False  # cache
 
         # Display cache
@@ -526,12 +529,16 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         self.img_files = list(cache.keys())  # update
         self.label_files = img2label_paths(cache.keys())  # update
 
-        n = len(self.img_files)  # number of fused images
+        n = len(shapes)  # number of fused images
         bi = np.floor(np.arange(n) / batch_size).astype(np.int)  # batch index
         nb = bi[-1] + 1  # number of batches
         self.batch = bi  # batch index of image
         self.n = n
         self.indices = range(n)
+
+        self.imgs = [None] * n
+        # not not cacheing images, removed
+
         
     def __len__(self):
         return len(self.img_files)
@@ -539,6 +546,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
     def __getitem__(self, index):
         index = self.indices[index]  # linear, shuffled, or image_weights
         hyp = self.hyp
+        mosaic = self.mosaic and random.random() < hyp['mosaic']
 
         # Load image
         # print("index = "+str(index), file=sys.stderr)
@@ -558,10 +566,19 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         # print("reconstr[o] shape ="+str(np.shape(reconstr_merged[0])), file=sys.stderr)
         h0, w0 = reconstr_merged[0].shape[:2]
         h, w = reconstr_merged[0].shape[:2]
+
+        imgRgb = reconstr_merged[0]
+        imgTh = reconstr_merged[1]
+
+        '''if mosaic:
+            # Load mosaic
+            if random.random() < 0.8:
+                imgRgb, labelsRgb = load_mosaic(self, index)
+        '''
         
-        # For lum: issue is w/ letterbox 
-        imgRgb, ratio, pad = letterbox(reconstr_merged[0], (640, 640), auto=False, scaleup=self.augment)
-        imgTh, _, _ = letterbox(reconstr_merged[1], (640, 640), auto=False, scaleup=self.augment)
+        # For lum: issue is w/ letterbox
+        imgRgb, ratio, pad = letterbox(reconstr_merged[0], self.img_size, auto=False, scaleup=self.augment)
+        imgTh, _, _ = letterbox(reconstr_merged[1], self.img_size, auto=False, scaleup=self.augment)
 
         ch_1, ch_2, ch_3 = cv2.split(imgRgb)
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
@@ -582,6 +599,9 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         if labels.size:  # normalized xywh to pixel xyxy format
             labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
 
+        
+        
+        # end custom section
         nL = len(labels)  # number of labels
         if nL:
             labels[:, 1:5] = xyxy2xywh(labels[:, 1:5])  # convert xyxy to xywh
@@ -629,7 +649,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
                 else:
                     nm += 1  # label missing
                     l = np.zeros((0, 5), dtype=np.float32)
-                x[im_file] = [l, (640, 512), segments] # hardcoded
+                x[im_file] = [l, shape, segments] # hardcoded <- why? changing back
             except Exception as e:
                 nc += 1
                 print("Corrupted = "+ im_file+" lb_file = "+lb_file)
@@ -700,7 +720,7 @@ def load_fused(self, index):
 
 ## End of custom, begin std
 class LoadImagesAndLabels(Dataset):  # for training/testing
-    def __init__(self, path, img_size=640, batch_size=16, augment=False, hyp=None, rect=False, image_weights=False,
+    def __init__(self, path, img_size=640, batch_size=16, augment=True, hyp=None, rect=False, image_weights=False,
                  cache_images=False, single_cls=False, stride=32, pad=0.0, prefix=''):
         self.img_size = img_size
         self.augment = augment
