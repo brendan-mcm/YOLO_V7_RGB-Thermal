@@ -575,9 +575,9 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
             if random.random() < .8: # maybe change to 1 for now?
                 mergedImg, labels = load_mosaic(self, index, True)
             else:
-                mergedImg, label = load_mosaic9(self, index, True)
+                mergedImg, labels = load_mosaic9(self, index, True)
             shapes = None
-            
+
 
         else:
         
