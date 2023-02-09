@@ -580,9 +580,9 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
             if random.random() < 1.0: # hyp['mixup']: for now
                 if random.random() < .8:
-                    img2, labels2 = load_mosaic(self, random.randint(0, len(self.labels) - 1))
+                    img2, labels2 = load_mosaic(self, random.randint(0, len(self.labels) - 1), True)
                 else:
-                    img2, labels2 = load_mosaic9(self, random.randint(0, len(self.labels) - 1))
+                    img2, labels2 = load_mosaic9(self, random.randint(0, len(self.labels) - 1), True)
                 r = np.random.beta(8.0, 8.0) # mixup ratio, alpha=beta=8.0
                 mergedImg = (mergedImg * r + img2 * (1 - r)).astype(np.uint8)
                 labels = np.concatenate((labels, labels2), 0)
