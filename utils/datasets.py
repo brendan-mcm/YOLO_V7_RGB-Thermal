@@ -570,34 +570,35 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
         imgRgb = reconstr_merged[0]
         imgTh = reconstr_merged[1]
 
-        '''if mosaic:
+        if mosaic:
             # Load mosaic
             if random.random() < 0.8:
-                imgRgb, labelsRgb = load_mosaic(self, index)
-        '''
-        
-        # For lum: issue is w/ letterbox
-        imgRgb, ratio, pad = letterbox(reconstr_merged[0], self.img_size, auto=False, scaleup=self.augment)
-        imgTh, _, _ = letterbox(reconstr_merged[1], self.img_size, auto=False, scaleup=self.augment)
-
-        ch_1, ch_2, ch_3 = cv2.split(imgRgb)
-        ch_4, ch_5, ch_6 = cv2.split(imgTh)
-
-        if num_channels == 7:
-            lum_img, _, _ = letterbox(np.float64(lum_img), (640, 640), auto=False, scaleup=self.augment)
-            # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
-            lum_vals, _, _ = cv2.split(lum_img)
-            # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
-            # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)    
-            mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
+                mergedImg, labels = load_mosaic(self, index, True)
+            shapes = None
         else:
-            mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+        
+            # For lum: issue is w/ letterbox
+            imgRgb, ratio, pad = letterbox(reconstr_merged[0], self.img_size, auto=False, scaleup=self.augment)
+            imgTh, _, _ = letterbox(reconstr_merged[1], self.img_size, auto=False, scaleup=self.augment)
 
-        shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
+            ch_1, ch_2, ch_3 = cv2.split(imgRgb)
+            ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
-        labels = self.labels[index].copy()
-        if labels.size:  # normalized xywh to pixel xyxy format
-            labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
+            if num_channels == 7:
+                lum_img, _, _ = letterbox(np.float64(lum_img), (640, 640), auto=False, scaleup=self.augment)
+                # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
+                lum_vals, _, _ = cv2.split(lum_img)
+                # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
+                # print("ch_1 shape = ", np.shape(ch_1), " adn type = ", type(ch_1), file=sys.stderr)    
+                mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6, lum_vals])
+            else:
+                mergedImg = cv2.merge([ch_1, ch_2, ch_3, ch_4, ch_5, ch_6])
+
+            shapes = (h0, w0), ((h / h0, w / w0), pad)  # for COCO mAP rescaling
+
+            labels = self.labels[index].copy()
+            if labels.size:  # normalized xywh to pixel xyxy format
+                labels[:, 1:] = xywhn2xyxy(labels[:, 1:], ratio[0] * w, ratio[1] * h, padw=pad[0], padh=pad[1])
 
         
         
@@ -1074,7 +1075,7 @@ def hist_equalize(img, clahe=True, bgr=False):
     return cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR if bgr else cv2.COLOR_YUV2RGB)  # convert YUV image to RGB
 
 
-def load_mosaic(self, index):
+def load_mosaic(self, index, fused = False):
     # loads images in a 4-mosaic
 
     labels4, segments4 = [], []
@@ -1083,7 +1084,10 @@ def load_mosaic(self, index):
     indices = [index] + random.choices(self.indices, k=3)  # 3 additional image indices
     for i, index in enumerate(indices):
         # Load image
-        img, _, (h, w) = load_image(self, index)
+        if fused:
+            img, _, (h, w) = load_fused(self, index)
+        else:
+            img, _, (h, w) = load_image(self, index)
 
         # place img in img4
         if i == 0:  # top left
