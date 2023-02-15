@@ -1132,7 +1132,11 @@ def load_mosaic(self, index, fused=False):
             x1a, y1a, x2a, y2a = xc, yc, min(xc + w, s * 2), min(s * 2, yc + h)
             x1b, y1b, x2b, y2b = 0, 0, min(w, x2a - x1a), min(y2a - y1a, h)
 
-        img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]  # img4[ymin:ymax, xmin:xmax]
+        if fused:
+            img4[y1a:y2a:, x1a:x2a:] = img[y1b:y2b:, x1b:x2b:]  # img4[ymin:ymax, xmin:xmax]
+        else:
+            img4[y1a:y2a, x1a:x2a] = img[y1b:y2b, x1b:x2b]  # img4[ymin:ymax, xmin:xmax]
+        
         padw = x1a - x1b
         padh = y1a - y1b
 
@@ -1162,6 +1166,7 @@ def load_mosaic(self, index, fused=False):
                                        perspective=self.hyp['perspective'],
                                        border=self.mosaic_border)  # border to remove
 
+    print("img4 shape = ",np.shape(img4), file=sys.stderr)
     return img4, labels4
 
 
