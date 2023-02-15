@@ -581,6 +581,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
             if random.random() < 1.0: # hyp['mixup']: for now
                 if random.random() < .8:
                     img2, labels2 = load_mosaic(self, random.randint(0, len(self.labels) - 1), True)
+                    
                 else:
                     img2, labels2 = load_mosaic9(self, random.randint(0, len(self.labels) - 1), True)
                 r = np.random.beta(8.0, 8.0) # mixup ratio, alpha=beta=8.0
@@ -936,21 +937,22 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
         mosaic = self.mosaic and random.random() < hyp['mosaic']
         if mosaic:
             # Load mosaic
-            if random.random() < 0.8:
+            if random.random() < 1.0:
                 img, labels = load_mosaic(self, index)
+                np.save("./img_test.npy", img)
             else:
                 img, labels = load_mosaic9(self, index)
             shapes = None
 
             # MixUp https://arxiv.org/pdf/1710.09412.pdf
-            if random.random() < hyp['mixup']:
+            ''' if random.random() < hyp['mixup']:
                 if random.random() < 0.8:
                     img2, labels2 = load_mosaic(self, random.randint(0, len(self.labels) - 1))
                 else:
                     img2, labels2 = load_mosaic9(self, random.randint(0, len(self.labels) - 1))
                 r = np.random.beta(8.0, 8.0)  # mixup ratio, alpha=beta=8.0
                 img = (img * r + img2 * (1 - r)).astype(np.uint8)
-                labels = np.concatenate((labels, labels2), 0)
+                labels = np.concatenate((labels, labels2), 0)'''
 
         else:
             # Load image
