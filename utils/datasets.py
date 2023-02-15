@@ -572,7 +572,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
 
         if mosaic:
             # Load mosaic
-            if random.random() < .8: # maybe change to 1 for now?
+            if random.random() <= 1.0: # maybe change to 1 for now?
                 mergedImg, labels = load_mosaic(self, index, True)
             else:
                 mergedImg, labels = load_mosaic9(self, index, True)
@@ -1166,7 +1166,7 @@ def load_mosaic(self, index, fused=False):
                                        perspective=self.hyp['perspective'],
                                        border=self.mosaic_border)  # border to remove
 
-    print("img4 shape = ",np.shape(img4), file=sys.stderr)
+    # print("img4 shape = ",np.shape(img4), file=sys.stderr) correct shape
     return img4, labels4
 
 
