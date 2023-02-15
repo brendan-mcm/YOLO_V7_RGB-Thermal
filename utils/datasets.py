@@ -574,6 +574,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testing
             # Load mosaic
             if random.random() <= 1.0: # maybe change to 1 for now?
                 mergedImg, labels = load_mosaic(self, index, True)
+                np.save("/scratch/network/bm18/thesis/YOLO_V7/runs/train/YOLOimg_test.npy", mergedImg)
             else:
                 mergedImg, labels = load_mosaic9(self, index, True)
             shapes = None
@@ -939,7 +940,7 @@ class LoadImagesAndLabels(Dataset):  # for training/testing
             # Load mosaic
             if random.random() < 1.0:
                 img, labels = load_mosaic(self, index)
-                np.save("./img_test.npy", img)
+                np.save("/scratch/network/bm18/thesis/YOLO_V7/runs/train/YOLOimg_test.npy", img)
             else:
                 img, labels = load_mosaic9(self, index)
             shapes = None
