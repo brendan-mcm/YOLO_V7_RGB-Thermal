@@ -507,7 +507,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testinga
          # Check cache
         self.label_files = img2label_paths(self.img_files)  # labels
         cache_path = (p if p.is_file() else Path(self.label_files[0]).parent).with_suffix('.cache')  # cached labels
-        if cache_path.is_file():
+        if False: # cache_path.is_file():
             cache, exists = torch.load(cache_path), True  # load
         else:
             # print("Going to cache labels with cache_path = "+str(cache_path))
@@ -670,7 +670,7 @@ class LoadFusedAndLabels(Dataset):  # for training/testinga
                 else:
                     nm += 1  # label missing
                     l = np.zeros((0, 5), dtype=np.float32)
-                x[im_file] = [l, shape, segments] # hardcoded <- why? changing back
+                x[im_file] = [l, (1024, 768), segments] # hardcoded <- why? changing back
             except Exception as e:
                 nc += 1
                 print("Corrupted = "+ im_file+" lb_file = "+lb_file)
