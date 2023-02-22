@@ -214,14 +214,14 @@ class LoadFusedImages:  # for inference
         h, w = reconstr_merged[0].shape[:2]
         
         # For lum: issue is w/ letterbox 
-        imgRgb, ratio, pad = letterbox(reconstr_merged[0], self.img_size, auto=False, scaleup=self.augment)
-        imgTh, _, _ = letterbox(reconstr_merged[1], self.img_size, auto=False, scaleup=self.augment)
+        imgRgb, ratio, pad = letterbox(reconstr_merged[0], self.img_size, auto=False)
+        imgTh, _, _ = letterbox(reconstr_merged[1], self.img_size, auto=False)
 
         ch_1, ch_2, ch_3 = cv2.split(imgRgb)
         ch_4, ch_5, ch_6 = cv2.split(imgTh)
 
         if num_channels == 7:
-            lum_img, _, _ = letterbox(np.float64(lum_img), (640, 640), auto=False, scaleup=self.augment)
+            lum_img, _, _ = letterbox(np.float64(lum_img), (640, 640), auto=False)
             # print("lum_img shape =",np.shape(lum_img), file=sys.stderr)
             lum_vals, _, _ = cv2.split(lum_img)
             # print("lum_vals shape =", np.shape(lum_vals), file=sys.stderr)
