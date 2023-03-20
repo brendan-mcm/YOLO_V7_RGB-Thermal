@@ -61,7 +61,7 @@ def detect(save_img=True): # changed default
 
     # Get names and colors
     names = model.module.names if hasattr(model, 'module') else model.names
-    colors = [[random.randint(0, 255) for _ in range(3)] for _ in names]
+    colors = [[238, 246, 16], [197, 115, 99], [87, 237, 90], [161, 145, 141], [147, 54, 111], [102, 7, 113], [20, 212, 90], [18, 74, 175], [37, 254, 168], [159, 14, 238], [5, 21, 151], [118, 233, 213], [37, 187, 241]] # [[random.randint(0, 255) for _ in range(3)] for _ in names]
 
     # Run inference
     if device.type != 'cpu':
