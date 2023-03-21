@@ -1,7 +1,6 @@
 import argparse
 import json
 import os
-import sys
 from pathlib import Path
 from threading import Thread
 
@@ -11,7 +10,7 @@ import yaml
 from tqdm import tqdm
 
 from models.experimental import attempt_load
-from utils.datasets import fused_dataloader
+from utils.datasets import create_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, check_requirements, \
     box_iou, non_max_suppression, scale_coords, xyxy2xywh, xywh2xyxy, set_logging, increment_path, colorstr
 from utils.metrics import ap_per_class, ConfusionMatrix
@@ -35,7 +34,7 @@ def test(data,
          save_txt=False,  # for auto-labelling
          save_hybrid=False,  # for hybrid auto-labelling
          save_conf=False,  # save auto-label confidences
-         plots=False,
+         plots=True,
          wandb_logger=None,
          compute_loss=None,
          half_precision=True,
@@ -59,6 +58,11 @@ def test(data,
         model = attempt_load(weights, map_location=device)  # load FP32 model
         gs = max(int(model.stride.max()), 32)  # grid size (max stride)
         imgsz = check_img_size(imgsz, s=gs)  # check img_size
+
+        # HARDCODED Load model2
+        model2 = attempt_load("runs/train/th-32-200/weights/best.pt", map_location=device)
+        gs2 = max(int(model2.stride.max()), 32) # grd size (max stride)
+        imgsz2 = check_img_size(imgsz2, s=gs2)
         
         if trace:
             model = TracedModel(model, device, imgsz)
@@ -67,17 +71,28 @@ def test(data,
     half = device.type != 'cpu' and half_precision  # half precision only supported on CUDA
     if half:
         model.half()
+        model2.half()
 
+    print("Made it to configuration")
     # Configure
     model.eval()
+    model2.eval()
+    data2 = "data/full_th.yaml" # HARDCODED
+
     if isinstance(data, str):
         is_coco = data.endswith('coco.yaml')
         with open(data) as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
+        with open(data2) as f:
+            data2 = yaml.load(f, Loader=yaml.SafeLoader)
+
     check_dataset(data)  # check
-    nc = 1 if single_cls else int(data['nc'])  # number of classes
+    check_dataset(data2)
+    nc = 1 if single_cls else int(data['nc'])  # number of classes (same)
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
+
+    print("Made past dataset")
     
     # Logging
     log_imgs = 0
@@ -86,10 +101,14 @@ def test(data,
     # Dataloader
     if not training:
         if device.type != 'cpu':
-            model(torch.zeros(1, 6, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
+            model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
+            model2(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model2.parameters())))
+        
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
         print("datat[task] = "+data[task])
-        dataloader = fused_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
+        dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
+                                       prefix=colorstr(f'{task}: '))[0]
+        dataloader2 = create_dataloader(data2[task], imgsz2, batch_size, gs2, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
     if v5_metric:
@@ -122,10 +141,7 @@ def test(data,
 
             # Run NMS
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
-            print("targets = ", targets[:, 2:], file=sys.stderr)
-            print("out = ", out, file=sys.stderr)
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
-            print("lb = ", lb, file=sys.stderr)
             t = time_synchronized()
             out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
             t1 += time_synchronized() - t
