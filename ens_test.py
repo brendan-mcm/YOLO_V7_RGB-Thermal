@@ -133,6 +133,10 @@ def test(data,
             # Run model
             t = time_synchronized()
             out, train_out = model(img, augment=augment)  # inference and training outputs
+            out2, train_out2 = model2(img, augment=augment)
+
+            print("out shape = ", np.shape(out), "out2 shape = ", np.shape(out2))
+
             t0 += time_synchronized() - t
 
             # Compute loss
