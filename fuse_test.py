@@ -69,7 +69,6 @@ def test(data,
     if half:
         model.half()
 
-    print("Made it to configuration")
     # Configure
     model.eval()
     if isinstance(data, str):
@@ -80,8 +79,6 @@ def test(data,
     nc = 1 if single_cls else int(data['nc'])  # number of classes
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
-
-    print("Made past dataset")
     
     # Logging
     log_imgs = 0
@@ -127,7 +124,9 @@ def test(data,
             # Run NMS
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
             print("targets = ", targets[:, 2:], file=sys.stderr)
+            print("out = ", out, file=sys.stderr)
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
+            print("lb = ", lb, file=sys.stderr)
             t = time_synchronized()
             out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
             t1 += time_synchronized() - t
