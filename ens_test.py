@@ -62,7 +62,7 @@ def test(data,
         # HARDCODED Load model2
         model2 = attempt_load("runs/train/th-32-200/weights/best.pt", map_location=device)
         gs2 = max(int(model2.stride.max()), 32) # grd size (max stride)
-        imgsz2 = check_img_size(imgsz2, s=gs2)
+        imgsz2 = check_img_size(imgsz, s=gs2)
         
         if trace:
             model = TracedModel(model, device, imgsz)
