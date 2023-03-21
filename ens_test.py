@@ -138,9 +138,9 @@ def test(data,
             print("out shape = ", np.shape(out), "out2 shape = ", np.shape(out2))
             # print("Out[0][0] = ", out[0][0], "out2[0][0] = ", out2[0][0])
 
-            out3 = np.concatenate((out, out2), axis=1)
+            out3 = torch.cat((out, out2), axis=1)
             print("out3  = ", np.shape(out3))
-            
+
             t0 += time_synchronized() - t
 
             # Compute loss
