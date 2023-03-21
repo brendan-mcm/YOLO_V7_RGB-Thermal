@@ -136,6 +136,7 @@ def test(data,
             out2, train_out2 = model2(img, augment=augment)
 
             print("out shape = ", np.shape(out), "out2 shape = ", np.shape(out2))
+            print("Out[0][0] = ", out[0][0], "out2[0][0] = ", out2[0][0])
 
             t0 += time_synchronized() - t
 
