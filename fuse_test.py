@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 
 from models.experimental import attempt_load
-from utils.datasets import create_dataloader
+from utils.datasets import fused_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, check_requirements, \
     box_iou, non_max_suppression, scale_coords, xyxy2xywh, xywh2xyxy, set_logging, increment_path, colorstr
 from utils.metrics import ap_per_class, ConfusionMatrix
@@ -91,7 +91,7 @@ def test(data,
             model(torch.zeros(1, 3, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
         print("datat[task] = "+data[task])
-        dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
+        dataloader = fused_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
     if v5_metric:
