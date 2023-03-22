@@ -130,9 +130,9 @@ def test(data,
             # Run model
             t = time_synchronized()
             
-            # print("shape img = ", np.shape(img))
+            print("type img = ", type(img))
             reconstr_merged = np.dsplit(img, 1)
-            print("shape reconstr_merged post = ", torch.size(reconstr_merged))
+            print("size reconstr_merged post = ", reconstr_merged.size())
             imgRgb = reconstr_merged[0]
             imgTh = reconstr_merged[1]
 
