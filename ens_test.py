@@ -131,8 +131,8 @@ def test(data,
             t = time_synchronized()
             
             reconstr_merged = np.dsplit(img, 2)
-            imgRgb = torch.from_numpy(reconstr_merged[0])
-            imgTh = torch.from_numpy(reconstr_merged[1])
+            imgRgb = reconstr_merged[0]
+            imgTh = reconstr_merged[1]
 
             print("shape imgRgb = ", np.shape(imgRgb), "shape imgTh = ", np.shape(imgTh))
 
