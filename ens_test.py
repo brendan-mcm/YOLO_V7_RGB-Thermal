@@ -132,7 +132,7 @@ def test(data,
             
             # print("shape img = ", np.shape(img))
             reconstr_merged = np.dsplit(img, 1)
-            # print("shape reconstr_merged post = ", np.shape(reconstr_merged))
+            print("shape reconstr_merged post = ", torch.size(reconstr_merged))
             imgRgb = reconstr_merged[0]
             imgTh = reconstr_merged[1]
 
