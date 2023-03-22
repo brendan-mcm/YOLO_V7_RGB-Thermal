@@ -10,7 +10,7 @@ import yaml
 from tqdm import tqdm
 
 from models.experimental import attempt_load
-from utils.datasets import create_dataloader
+from utils.datasets import fused_dataloader
 from utils.general import coco80_to_coco91_class, check_dataset, check_file, check_img_size, check_requirements, \
     box_iou, non_max_suppression, scale_coords, xyxy2xywh, xywh2xyxy, set_logging, increment_path, colorstr
 from utils.metrics import ap_per_class, ConfusionMatrix
@@ -77,17 +77,17 @@ def test(data,
     # Configure
     model.eval()
     model2.eval()
-    data2 = "data/full_th.yaml" # HARDCODED
+    # data2 = "data/full_th.yaml" # HARDCODED
 
     if isinstance(data, str):
         is_coco = data.endswith('coco.yaml')
         with open(data) as f:
             data = yaml.load(f, Loader=yaml.SafeLoader)
-        with open(data2) as f:
-            data2 = yaml.load(f, Loader=yaml.SafeLoader)
+        '''with open(data2) as f:
+            data2 = yaml.load(f, Loader=yaml.SafeLoader)'''
 
     check_dataset(data)  # check
-    check_dataset(data2)
+    # check_dataset(data2)
     nc = 1 if single_cls else int(data['nc'])  # number of classes (same)
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
@@ -106,11 +106,8 @@ def test(data,
         
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
         print("datat[task] = "+data[task])
-        dataloader = create_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
+        dataloader = fused_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
-        dataloader2 = create_dataloader(data2[task], imgsz2, batch_size, gs2, opt, pad=0.5, rect=True,
-                                       prefix=colorstr(f'{task}: '))[0]
-
     if v5_metric:
         print("Testing with YOLOv5 AP metric...")
     
@@ -132,8 +129,14 @@ def test(data,
         with torch.no_grad():
             # Run model
             t = time_synchronized()
-            out, train_out = model(img, augment=augment)  # inference and training outputs
-            out2, train_out2 = model2(img, augment=augment)
+            
+            reconstr_merged = np.dsplit(img, 2)
+            imgRgb = reconstr_merged[0]
+            imgTh = reconstr_merged[1]
+
+
+            out, train_out = model(imgRgb, augment=augment)  # inference and training outputs
+            out2, train_out2 = model2(imgTh, augment=augment)
 
             print("out shape = ", np.shape(out), "out2 shape = ", np.shape(out2))
             # print("Out[0][0] = ", out[0][0], "out2[0][0] = ", out2[0][0])
