@@ -132,9 +132,9 @@ def test(data,
             
             print("type img = ", type(img), "img size = ", img.size())
 
-            np_img = np.array(img)
-            np_img_split = np.dsplit(img, 1)
-            img_split = torch.from_numpy(np_img_split)
+            # np_img = np.array(img)
+            # np_img_split = np.dsplit(img, 1)
+            img_split = torch.tensor_split(img, 2, dim=1)
             
             print("type reconstr_merged post = ", type(img_split))
             imgRgb = img_split[0]
