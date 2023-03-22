@@ -130,7 +130,9 @@ def test(data,
             # Run model
             t = time_synchronized()
             
+            print("shape reconstr_merged = ", reconstr_merged)
             reconstr_merged = np.dsplit(img, 2)
+            print("shape reconstr_merged post = ", reconstr_merged)
             imgRgb = reconstr_merged[0]
             imgTh = reconstr_merged[1]
 
