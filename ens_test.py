@@ -34,7 +34,7 @@ def test(data,
          save_txt=False,  # for auto-labelling
          save_hybrid=False,  # for hybrid auto-labelling
          save_conf=False,  # save auto-label confidences
-         plots=True,
+         plots=False,
          wandb_logger=None,
          compute_loss=None,
          half_precision=True,
@@ -132,14 +132,13 @@ def test(data,
             
             print("type img = ", type(img), "img size = ", img.size())
 
-            img_size = img.size(dim=0)
-            if img_size == 16:
-                reconstr_merged = torch.reshape(img, (2, 16, 3, 640, 640))
-            elif img_size == 2:
-                 reconstr_merged = torch.reshape(img, (2, 2, 3, 640, 640))
-            print("type reconstr_merged post = ", reconstr_merged)
-            imgRgb = reconstr_merged[0]
-            imgTh = reconstr_merged[1]
+            np_img = np.array(img)
+            np_img_split = np.dsplit(img, 1)
+            img_split = torch.from_numpy(np_img_split)
+            
+            print("type reconstr_merged post = ", type(img_split))
+            imgRgb = img_split[0]
+            imgTh = img_split[1]
 
             print("shape imgRgb = ", imgRgb.size(), "shape imgTh = ", imgTh.size())
 
