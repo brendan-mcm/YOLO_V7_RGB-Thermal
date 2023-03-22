@@ -131,7 +131,12 @@ def test(data,
             t = time_synchronized()
             
             print("type img = ", type(img), "img size = ", img.size())
-            reconstr_merged = torch.reshape(img, (2, 16, 3, 640, 640))
+
+            img_size = img.size(dim=0)
+            if img_size == 16:
+                reconstr_merged = torch.reshape(img, (2, 16, 3, 640, 640))
+            elif img_size == 2:
+                 reconstr_merged = torch.reshape(img, (2, 2, 3, 640, 640))
             print("type reconstr_merged post = ", reconstr_merged)
             imgRgb = reconstr_merged[0]
             imgTh = reconstr_merged[1]
