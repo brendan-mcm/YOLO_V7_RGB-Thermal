@@ -137,8 +137,8 @@ def test(data,
             img_split = torch.tensor_split(img, 2, dim=1)
             
             print("type reconstr_merged post = ", type(img_split))
-            imgRgb = img_split[0]
-            imgTh = img_split[1]
+            imgRgb = img_split[1]
+            imgTh = img_split[0]
 
             print("shape imgRgb = ", imgRgb.size(), "shape imgTh = ", imgTh.size())
 
