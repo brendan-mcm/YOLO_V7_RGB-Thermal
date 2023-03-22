@@ -130,9 +130,9 @@ def test(data,
             # Run model
             t = time_synchronized()
             
-            print("type img = ", type(img))
+            print("type img = ", type(img), "img size = ", img.size())
             reconstr_merged = np.dsplit(img, 1)
-            print("size reconstr_merged post = ", reconstr_merged.size())
+            print("type reconstr_merged post = ", reconstr_merged)
             imgRgb = reconstr_merged[0]
             imgTh = reconstr_merged[1]
 
