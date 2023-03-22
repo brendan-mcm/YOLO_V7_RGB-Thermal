@@ -131,9 +131,10 @@ def test(data,
             t = time_synchronized()
             
             reconstr_merged = np.dsplit(img, 2)
-            imgRgb = reconstr_merged[0]
-            imgTh = reconstr_merged[1]
+            imgRgb = torch.from_numpy(reconstr_merged[0])
+            imgTh = torch.from_numpy(reconstr_merged[1])
 
+            print("shape imgRgb = ", np.shape(imgRgb), "shape imgTh = ", np.shape(imgTh))
 
             out, train_out = model(imgRgb, augment=augment)  # inference and training outputs
             out2, train_out2 = model2(imgTh, augment=augment)
