@@ -77,7 +77,6 @@ def test(data,
     # Configure
     model.eval()
     model2.eval()
-    # data2 = "data/full_th.yaml" # HARDCODED
 
     if isinstance(data, str):
         is_coco = data.endswith('coco.yaml')
@@ -140,12 +139,12 @@ def test(data,
             imgRgb = img_split[1]
             imgTh = img_split[0]
 
-            print("shape imgRgb = ", imgRgb.size(), "shape imgTh = ", imgTh.size())
+            # print("shape imgRgb = ", imgRgb.size(), "shape imgTh = ", imgTh.size())
 
             out, train_out = model(imgRgb, augment=augment)  # inference and training outputs
             out2, train_out2 = model2(imgTh, augment=augment)
 
-            print("out shape = ", np.shape(out), "out2 shape = ", np.shape(out2))
+            # print("out shape = ", np.shape(out), "out2 shape = ", np.shape(out2))
             # print("Out[0][0] = ", out[0][0], "out2[0][0] = ", out2[0][0])
 
             out3 = torch.cat((out, out2), axis=1)
@@ -328,7 +327,8 @@ def test(data,
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(prog='test.py')
-    parser.add_argument('--weights', nargs='+', type=str, default='yolov7.pt', help='model.pt path(s)')
+    parser.add_argument('--weights_rgb', nargs='+', type=str, default='yolov7.pt', help='model.pt path(s)')
+    parser.add_argument('--weights_th', type=str, default='yolov7.pt', help='model.pt path(s)')
     parser.add_argument('--data', type=str, default='data/coco.yaml', help='*.data path')
     parser.add_argument('--batch-size', type=int, default=32, help='size of each image batch')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
