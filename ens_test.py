@@ -20,6 +20,7 @@ from utils.torch_utils import select_device, time_synchronized, TracedModel
 
 def test(data,
          weights=None,
+         weights_th=None,
          batch_size=32,
          imgsz=640,
          conf_thres=0.001,
@@ -59,8 +60,8 @@ def test(data,
         gs = max(int(model.stride.max()), 32)  # grid size (max stride)
         imgsz = check_img_size(imgsz, s=gs)  # check img_size
 
-        # HARDCODED Load model2
-        model2 = attempt_load("runs/train/th-32-200/weights/best.pt", map_location=device)
+        # Load model2 (th)
+        model2 = attempt_load(weights_th, map_location=device)
         gs2 = max(int(model2.stride.max()), 32) # grd size (max stride)
         imgsz2 = check_img_size(imgsz, s=gs2)
         
@@ -356,7 +357,8 @@ if __name__ == '__main__':
 
     if opt.task in ('train', 'val', 'test'):  # run normally
         test(opt.data,
-             opt.weights,
+             opt.weights_rgb,
+             opt.weights_th,
              opt.batch_size,
              opt.img_size,
              opt.conf_thres,
