@@ -67,7 +67,6 @@ def test(data,
     if half:
         model.half()
 
-    print("Made it to configuration")
     # Configure
     model.eval()
     if isinstance(data, str):
@@ -79,8 +78,6 @@ def test(data,
     iouv = torch.linspace(0.5, 0.95, 10).to(device)  # iou vector for mAP@0.5:0.95
     niou = iouv.numel()
 
-    print("Made past dataset")
-    
     # Logging
     log_imgs = 0
     if wandb_logger and wandb_logger.wandb:
@@ -246,6 +243,9 @@ def test(data,
     if not training:
         print('Speed: %.1f/%.1f/%.1f ms inference/NMS/total per %gx%g image at batch-size %g' % t)
 
+
+
+
     # Plots
     if plots:
         confusion_matrix.plot(save_dir=save_dir, names=list(names.values()))
@@ -285,6 +285,8 @@ def test(data,
     if not training:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
+    
+    print("Weights used = ", opt.weights, " task = ", opt.task, " conf thresh = ", opt.conf_thres, "NMS IOU = ", opt.iou_thres)
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
