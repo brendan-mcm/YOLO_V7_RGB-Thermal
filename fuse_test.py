@@ -89,7 +89,7 @@ def test(data,
         if device.type != 'cpu':
             model(torch.zeros(1, 6, imgsz, imgsz).to(device).type_as(next(model.parameters())))  # run once
         task = opt.task if opt.task in ('train', 'val', 'test') else 'val'  # path to train/val/test images
-        print("datat[task] = "+data[task])
+        # print("datat[task] = "+data[task])
         dataloader = fused_dataloader(data[task], imgsz, batch_size, gs, opt, pad=0.5, rect=True,
                                        prefix=colorstr(f'{task}: '))[0]
 
@@ -123,10 +123,10 @@ def test(data,
 
             # Run NMS
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
-            print("targets = ", targets[:, 2:], file=sys.stderr)
-            print("out = ", out, file=sys.stderr)
+            # print("targets = ", targets[:, 2:], file=sys.stderr)
+            # print("out = ", out, file=sys.stderr)
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
-            print("lb = ", lb, file=sys.stderr)
+            # print("lb = ", lb, file=sys.stderr)
             t = time_synchronized()
             out = non_max_suppression(out, conf_thres=conf_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
             t1 += time_synchronized() - t
@@ -287,6 +287,7 @@ def test(data,
     if not training:
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
+    print("Weights used = ", opt.weights, " task = ", opt.task, " conf thresh = ", opt.conf_thres, "NMS IOU = ", opt.iou_thres)
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
