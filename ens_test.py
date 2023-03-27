@@ -130,13 +130,13 @@ def test(data,
             # Run model
             t = time_synchronized()
             
-            print("type img = ", type(img), "img size = ", img.size())
+            # print("type img = ", type(img), "img size = ", img.size())
 
             # np_img = np.array(img)
             # np_img_split = np.dsplit(img, 1)
             img_split = torch.tensor_split(img, 2, dim=1)
             
-            print("type reconstr_merged post = ", type(img_split))
+            # print("type reconstr_merged post = ", type(img_split))
             imgRgb = img_split[1]
             imgTh = img_split[0]
 
@@ -149,7 +149,7 @@ def test(data,
             # print("Out[0][0] = ", out[0][0], "out2[0][0] = ", out2[0][0])
 
             out3 = torch.cat((out, out2), axis=1)
-            print("out3  = ", np.shape(out3))
+            # print("out3  = ", np.shape(out3))
 
             t0 += time_synchronized() - t
 
