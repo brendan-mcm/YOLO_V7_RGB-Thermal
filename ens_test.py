@@ -149,7 +149,7 @@ def test(data,
             # print("Out[0][0] = ", out[0][0], "out2[0][0] = ", out2[0][0])
 
             out3 = torch.cat((out, out2), axis=1)
-            # print("out3  = ", np.shape(out3))
+            print("out3  = ", np.shape(out3))
 
             t0 += time_synchronized() - t
 
