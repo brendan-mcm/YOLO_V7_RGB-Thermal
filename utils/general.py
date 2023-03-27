@@ -621,7 +621,7 @@ def mod_non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes
     time_limit = 10.0  # seconds to quit after
     redundant = True  # require redundant detections
     multi_label &= nc > 1  # multiple labels per box (adds 0.5ms/img)
-    merge = True  # use merge-NMS
+    merge = False  # use merge-NMS
 
     t = time.time()
     output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
@@ -659,7 +659,9 @@ def mod_non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes
             x = torch.cat((box[i], x[i, j + 5, None], j[:, None].float()), 1)
         else:  # best class only
             conf, j = x[:, 5:].max(1, keepdim=True)
+            print("x piror = ",x)
             x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_thres]
+            print("x post = ", x)
 
         # Filter by class
         if classes is not None:
