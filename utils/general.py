@@ -616,9 +616,9 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
     xc1 = rgb_pred[..., 4] > rgb_conf  # candidates
     xc2 = th_pred[..., 4] > th_conf
 
-    xc = torch.cat(xc1, xc2)
+    xc = xc1 + xc2 # tuples
     prediction = torch.cat((rgb_pred, th_pred), axis=1)
-    
+
     print("xc = ", xc)
     # Settings
     min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
