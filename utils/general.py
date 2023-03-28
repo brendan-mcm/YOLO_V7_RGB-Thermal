@@ -616,11 +616,15 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
     xc1 = rgb_pred[..., 4] > rgb_conf  # candidates
     xc2 = th_pred[..., 4] > th_conf
 
+    print("xc1 shape = ", np.shape(xc1))
+    print("xc2 shape = ", np.shape(xc2))
+
     xc = xc1 + xc2 # tuples
+    print("xc combo shape = ", np.shape(xc2))
+    
     prediction = torch.cat((rgb_pred, th_pred), axis=1)
 
     print("pred shape = ", np.shape(prediction))
-    print("xc = ", np.shape(xc))
     # Settings
     min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
     max_det = 300  # maximum number of detections per image
