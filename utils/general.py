@@ -667,7 +667,7 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
         # Detections matrix nx6 (xyxy, conf, cls)
         print("x piror = ",np.shape(x))
         if multi_label:
-            i, j = (x[:, 5:] > conf_thres).nonzero(as_tuple=False).T
+            i, j = (x[:, 5:] > rgb_conf).nonzero(as_tuple=False).T
             x = torch.cat((box[i], x[i, j + 5, None], j[:, None].float()), 1)
         
         ''' else:  # best class only
