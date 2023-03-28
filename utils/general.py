@@ -604,7 +604,7 @@ def box_diou(box1, box2, eps: float = 1e-7):
     # The distance IoU is the IoU penalized by a normalized
     # distance between boxes' centers squared.
     return iou - (centers_distance_squared / diagonal_distance_squared)
-def mod_non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=None, agnostic=False, multi_label=False,
+def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_thres=0.45, classes=None, agnostic=False, multi_label=False,
                         labels=()):
     """Runs Non-Maximum Suppression (NMS) on inference results
 
@@ -612,9 +612,13 @@ def mod_non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes
          list of detections, on (n,6) tensor per image [xyxy, conf, cls]
     """
 
-    nc = prediction.shape[2] - 5  # number of classes
-    xc = prediction[..., 4] > conf_thres  # candidates
+    nc = rgb_pred.shape[2] - 5  # number of classes
+    xc1 = rgb_pred[..., 4] > rgb_conf  # candidates
+    xc2 = th_pred[..., 4] > th_conf
 
+    xc = torch.cat(xc1, xc2)
+    prediction = torch.cat((rgb_pred, th_pred), axis=1)
+    
     print("xc = ", xc)
     # Settings
     min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
