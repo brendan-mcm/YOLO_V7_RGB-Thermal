@@ -648,10 +648,10 @@ def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1):
                 areas[i], areas[maxpos + i + 1] = areas[maxpos + i + 1].clone(), areas[i].clone()
 
         # IoU calculate
-        yy1 = np.maximum(dets[i, 0].numpy(), dets[pos:, 0].numpy())
-        xx1 = np.maximum(dets[i, 1].numpy(), dets[pos:, 1].numpy())
-        yy2 = np.minimum(dets[i, 2].numpy(), dets[pos:, 2].numpy())
-        xx2 = np.minimum(dets[i, 3].numpy(), dets[pos:, 3].numpy())
+        yy1 = np.maximum(dets[i, 0].cpu().numpy(), dets[pos:, 0].cpu().numpy())
+        xx1 = np.maximum(dets[i, 1].cpu().numpy(), dets[pos:, 1].cpu().numpy())
+        yy2 = np.minimum(dets[i, 2].cpu().numpy(), dets[pos:, 2].cpu().numpy())
+        xx2 = np.minimum(dets[i, 3].cpu().numpy(), dets[pos:, 3].cpu().numpy())
         
         w = np.maximum(0.0, xx2 - xx1 + 1)
         h = np.maximum(0.0, yy2 - yy1 + 1)
