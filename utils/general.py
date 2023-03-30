@@ -703,7 +703,7 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
     time_limit = 10.0  # seconds to quit after
     redundant = False  # require redundant detections
     multi_label &= nc > 1  # multiple labels per box (adds 0.5ms/img)
-    merge = True  # use merge-NMS
+    merge = False  # use merge-NMS
     soft = True # use soft nms
 
     t = time.time()
