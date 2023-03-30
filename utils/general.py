@@ -679,7 +679,7 @@ def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1, iou=True
 
 
 def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_thres=0.45, classes=None, agnostic=False, multi_label=False,
-                        labels=()):
+                        labels=(), merge=True, soft=True):
     """Runs Non-Maximum Suppression (NMS) on inference results
 
     Returns:
@@ -706,8 +706,8 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
     time_limit = 10.0  # seconds to quit after
     redundant = False  # require redundant detections
     multi_label &= nc > 1  # multiple labels per box (adds 0.5ms/img)
-    merge = True  # use merge-NMS
-    soft = True # use soft nms
+    # merge = True  # use merge-NMS
+    # soft = True # use soft nms
 
     t = time.time()
     output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
@@ -794,7 +794,7 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
     return output
 
 def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=None, agnostic=False, multi_label=False,
-                        labels=()):
+                        labels=(), merge=False, soft=False):
     """Runs Non-Maximum Suppression (NMS) on inference results
 
     Returns:
@@ -811,8 +811,8 @@ def non_max_suppression(prediction, conf_thres=0.25, iou_thres=0.45, classes=Non
     time_limit = 10.0  # seconds to quit after
     redundant = True  # require redundant detections
     multi_label &= nc > 1  # multiple labels per box (adds 0.5ms/img)
-    merge = True  # use merge-NMS
-    soft = True
+    merge = False  # use merge-NMS
+    soft = False
 
     t = time.time()
     output = [torch.zeros((0, 6), device=prediction.device)] * prediction.shape[0]
