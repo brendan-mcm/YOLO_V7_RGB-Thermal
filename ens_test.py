@@ -24,6 +24,7 @@ def test(data,
          batch_size=32,
          imgsz=640,
          conf_thres=0.75,
+         th_thres=.75,
          iou_thres=0.65,  # for NMS
          save_json=False,
          single_cls=False,
@@ -161,7 +162,7 @@ def test(data,
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
             t = time_synchronized()
-            out = mod_non_max_suppression(out, out2, rgb_conf=conf_thres, th_conf=.9, iou_thres=iou_thres, labels=lb, multi_label=True)
+            out = mod_non_max_suppression(out, out2, rgb_conf=conf_thres, th_conf=th_thres, iou_thres=iou_thres, labels=lb, multi_label=True)
             t1 += time_synchronized() - t
 
         # Statistics per image
@@ -336,6 +337,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch-size', type=int, default=32, help='size of each image batch')
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.65, help='object confidence threshold')
+    parser.add_argument('--th-thres', type=float, default=0.65, help='th object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.65, help='IOU threshold for NMS')
     parser.add_argument('--task', default='val', help='train, val, test, speed or study')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
@@ -364,6 +366,7 @@ if __name__ == '__main__':
              opt.batch_size,
              opt.img_size,
              opt.conf_thres,
+             opt.th_thres,
              opt.iou_thres,
              opt.save_json,
              opt.single_cls,
