@@ -769,7 +769,7 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
         boxes, scores = x[:, :4] + c, x[:, 4]  # boxes (offset by class), scores
         
         if soft:
-            i = soft_nms_pytorch(boxes, scores, sigma=0.5, thresh=iou_thres, cuda=0):
+            i = soft_nms_pytorch(boxes, scores, sigma=0.5, thresh=iou_thres, cuda=0)
         else:
             i = torchvision.ops.nms(boxes, scores, iou_thres)  # NMS
         if i.shape[0] > max_det:  # limit detections
