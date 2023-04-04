@@ -96,6 +96,8 @@ def test(data,
     niou = iouv.numel()
 
     print("Made past dataset")
+    merge_real = True
+    soft_real = False
     
     # Logging
     log_imgs = 0
@@ -161,7 +163,7 @@ def test(data,
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
             t = time_synchronized()
-            out = mod_non_max_suppression(out, out2, rgb_conf=conf_thres, th_conf=th_thres, iou_thres=iou_thres, labels=lb, multi_label=True, merge=merge, soft=soft)
+            out = mod_non_max_suppression(out, out2, rgb_conf=conf_thres, th_conf=th_thres, iou_thres=iou_thres, labels=lb, multi_label=True, merge=merge_real, soft=soft_real)
             t1 += time_synchronized() - t
 
 
@@ -323,7 +325,7 @@ def test(data,
         print(f"Results saved to {save_dir}{s}")
     
     print("weights used = ", opt.weights_rgb, " , ",opt.weights_th, " task = ", opt.task, " conf thresh = ", opt.conf_thres, "th thres = ", opt.th_thres, "NMS IOU = ", opt.iou_thres)
-    print("merge = ", merge, " soft = ", soft)
+    print("merge = ", merge_real, " soft = ", soft_real)
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
