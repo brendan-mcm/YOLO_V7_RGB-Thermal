@@ -26,7 +26,8 @@ def test(data,
          conf_thres=0.75,
          th_thres=.75,
          iou_thres=0.65,  # for NMS
-         merge_soft=True,
+         merge=True,
+         soft=True,
          save_json=False,
          single_cls=False,
          augment=False,
@@ -163,7 +164,7 @@ def test(data,
             targets[:, 2:] *= torch.Tensor([width, height, width, height]).to(device)  # to pixels
             lb = [targets[targets[:, 0] == i, 1:] for i in range(nb)] if save_hybrid else []  # for autolabelling
             t = time_synchronized()
-            out = mod_non_max_suppression(out, out2, rgb_conf=conf_thres, th_conf=th_thres, iou_thres=iou_thres, labels=lb, multi_label=True, merge=merge_soft, soft=merge_soft)
+            out = mod_non_max_suppression(out, out2, rgb_conf=conf_thres, th_conf=th_thres, iou_thres=iou_thres, labels=lb, multi_label=True, merge=merge, soft=soft)
             t1 += time_synchronized() - t
 
 
@@ -325,7 +326,7 @@ def test(data,
         print(f"Results saved to {save_dir}{s}")
     
     print("weights used = ", opt.weights_rgb, " , ",opt.weights_th, " task = ", opt.task, " conf thresh = ", opt.conf_thres, "th thres = ", opt.th_thres, "NMS IOU = ", opt.iou_thres)
-    print("merge-soft = ", merge_soft)
+    print("merge = ", merge, " soft = ", soft)
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
@@ -342,7 +343,8 @@ if __name__ == '__main__':
     parser.add_argument('--conf-thres', type=float, default=0.65, help='object confidence threshold')
     parser.add_argument('--th-thres', type=float, default=0.65, help='th object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.65, help='IOU threshold for NMS')
-    parser.add_argument('--merge-soft', default=True, help='soft NMS with merge')
+    parser.add_argument('--merge', default=True, help='merge NMS')
+    parser.add_argument('--soft', default=True, help='soft-NMS instead of normal')
     parser.add_argument('--task', default='val', help='train, val, test, speed or study')
     parser.add_argument('--device', default='', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--single-cls', action='store_true', help='treat as single-class dataset')
@@ -372,7 +374,8 @@ if __name__ == '__main__':
              opt.conf_thres,
              opt.th_thres,
              opt.iou_thres,
-             opt.merge_soft,
+             opt.merge,
+             opt.soft,
              opt.save_json,
              opt.single_cls,
              opt.augment,
