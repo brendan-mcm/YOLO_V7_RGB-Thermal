@@ -690,15 +690,15 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
     xc1 = rgb_pred[..., 4] > rgb_conf  # candidates
     xc2 = th_pred[..., 4] > th_conf
 
-    print("xc1 shape = ", np.shape(xc1))
-    print("xc2 shape = ", np.shape(xc2), " and type = ", type(xc2))
+    # print("xc1 shape = ", np.shape(xc1))
+    # print("xc2 shape = ", np.shape(xc2), " and type = ", type(xc2))
 
     xc = torch.cat((xc1, xc2), axis=1)
-    print("xc combo shape = ", np.shape(xc))
+   # print("xc combo shape = ", np.shape(xc))
 
     prediction = torch.cat((rgb_pred, th_pred), axis=1)
 
-    print("pred shape = ", np.shape(prediction))
+     #print("pred shape = ", np.shape(prediction))
     # Settings
     min_wh, max_wh = 2, 4096  # (pixels) minimum and maximum box width and height
     max_det = 300  # maximum number of detections per image
@@ -740,7 +740,7 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
         box = xywh2xyxy(x[:, :4])
 
         # Detections matrix nx6 (xyxy, conf, cls)
-        print("x piror = ",np.shape(x))
+        # print("x piror = ",np.shape(x))
         if multi_label:
             i, j = (x[:, 5:] > rgb_conf).nonzero(as_tuple=False).T
             x = torch.cat((box[i], x[i, j + 5, None], j[:, None].float()), 1)
@@ -750,7 +750,7 @@ def mod_non_max_suppression(rgb_pred, th_pred, rgb_conf=0.25, th_conf=0.25, iou_
             
             x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_thres] '''
         
-        print("x post = ", np.shape(x))
+        # print("x post = ", np.shape(x))
 
         # Filter by class
         if classes is not None:
