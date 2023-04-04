@@ -660,7 +660,7 @@ def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1, iou=Fals
             ovr = torch.div(inter, (areas[i] + areas[pos:] - inter))
 
         else:
-            ovr = bbox_iou((dets[i, 0], dets[i, 1], dets[i, 2], dets[i, 3]), (dets[pos:, 0], dets[pos:, 1], dets[pos:, 2], dets[pos:, 3]))
+            ovr = bbox_iou((dets[i, 0], dets[i, 1], dets[i, 2], dets[i, 3]), torch.tensor((dets[pos:, 0], dets[pos:, 1], dets[pos:, 2], dets[pos:, 3])))
 
         # Gaussian decay
         weight = torch.exp(-(ovr * ovr) / sigma)
