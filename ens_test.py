@@ -96,7 +96,7 @@ def test(data,
     niou = iouv.numel()
 
     print("Made past dataset")
-    merge_real = True
+    merge_real = False
     soft_real = True
     
     # Logging
