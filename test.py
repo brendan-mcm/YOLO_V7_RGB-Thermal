@@ -283,7 +283,7 @@ def test(data,
         s = f"\n{len(list(save_dir.glob('labels/*.txt')))} labels saved to {save_dir / 'labels'}" if save_txt else ''
         print(f"Results saved to {save_dir}{s}")
     
-    print("Weights used = ", opt.weights, " task = ", opt.task, " conf thresh = ", opt.conf_thres, "NMS IOU = ", opt.iou_thres)
+    # print("Weights used = ", opt.weights, " task = ", opt.task, " conf thresh = ", opt.conf_thres, "NMS IOU = ", opt.iou_thres)
     maps = np.zeros(nc) + map
     for i, c in enumerate(ap_class):
         maps[c] = ap[i]
