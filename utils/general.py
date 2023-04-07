@@ -606,7 +606,7 @@ def box_diou(box1, box2, eps: float = 1e-7):
     return iou - (centers_distance_squared / diagonal_distance_squared)
 
 ## Code taken from https://github.com/DocF/Soft-NMS/blob/master/softnms_pytorch.py (Richard Fang)
-def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1, iou=False):
+def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1, iou=True):
     """
     Build a pytorch implement of Soft NMS algorithm.
     # Augments
@@ -658,6 +658,9 @@ def soft_nms_pytorch(dets, box_scores, sigma=0.5, thresh=0.001, cuda=1, iou=Fals
             h = np.maximum(0.0, yy2 - yy1 + 1)
             inter = torch.tensor(w * h).cuda() if cuda else torch.tensor(w * h)
             ovr = torch.div(inter, (areas[i] + areas[pos:] - inter))
+
+            print("inter size = ", inter.size())
+
 
         else:
             ovr = bbox_iou((dets[i, 0], dets[i, 1], dets[i, 2], dets[i, 3]), torch.tensor((dets[pos:, 0], dets[pos:, 1], dets[pos:, 2], dets[pos:, 3])))
