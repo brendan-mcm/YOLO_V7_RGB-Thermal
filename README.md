@@ -1,5 +1,5 @@
 # Modified YOLOv7
 
-Modification of paper - [YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors](https://arxiv.org/abs/2207.02696)
+Modification of paper - [YOLOv7: Trainable bag-of-freebies sets new state-of-the-art for real-time object detectors](https://arxiv.org/abs/2207.02696) to support early and late stage fusion with both RGB and Thermal images.
 
-to support early and late stage fusion with both RGB and Thermal images.
+[Thesis poster here](./poster_research.pdf)
